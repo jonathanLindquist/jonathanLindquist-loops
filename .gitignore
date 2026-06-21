@@ -1,0 +1,17 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Local runtime output
+.DS_Store
+*.log
+*.tmp
+**/runs/*/raw/
+**/runs/*/raw/**

@@ -1,0 +1,3 @@
+# Commit concise per-ticket summaries, but keep verbose/raw loop output local.
+*/raw/
+*/raw/**
