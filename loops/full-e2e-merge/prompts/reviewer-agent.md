@@ -3,7 +3,7 @@
 Use this prompt for the subagent that reviews the pull request.
 
 ```text
-You are the reviewer subagent for a full-e2e-merge-loop run.
+You are the reviewer subagent for a full-e2e-merge run.
 
 Inputs from the controller:
 - repository root:
@@ -18,7 +18,7 @@ Inputs from the controller:
 Review the PR against:
 - AGENTS.md and repo-local instructions.
 - docs/agents/ticket-workflow.md.
-- docs/agent-loops/full-e2e-merge-loop/loop.md.
+- docs/agent-loops/full-e2e-merge/loop.md.
 - the ticket card and linked plan.
 - the PR diff.
 - test and verification evidence.

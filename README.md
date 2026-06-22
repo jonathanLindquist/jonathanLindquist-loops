@@ -12,11 +12,11 @@ logs local.
 
 ## Repository Structure
 
-- `loops/full-e2e-merge-loop/`: the first loop definition.
+- `loops/full-e2e-merge/`: the first loop definition.
 - `loops/<loop-id>/`: future loop definitions, each with its own config,
   prompts, templates, and run-record policy.
 
-## full-e2e-merge-loop
+## full-e2e-merge
 
 The first loop turns the top ready Backlog ticket into a merged pull request:
 
@@ -32,9 +32,9 @@ Copy into a target project from this repository root:
 
 ```bash
 TARGET_REPO=/path/to/target-repo
-mkdir -p "$TARGET_REPO/docs/agent-loops/full-e2e-merge-loop"
-cp -R loops/full-e2e-merge-loop/. "$TARGET_REPO/docs/agent-loops/full-e2e-merge-loop/"
+mkdir -p "$TARGET_REPO/docs/agent-loops/full-e2e-merge"
+cp -R loops/full-e2e-merge/. "$TARGET_REPO/docs/agent-loops/full-e2e-merge/"
 ```
 
-Then customize `docs/agent-loops/full-e2e-merge-loop/loop-config.json` for that
+Then customize `docs/agent-loops/full-e2e-merge/loop-config.json` for that
 project.

@@ -1,10 +1,10 @@
-# full-e2e-merge-loop
+# full-e2e-merge
 
 Project-local loop definition and run records for taking one ready ticket all
 the way through implementation, review, pull request, merge, and closeout.
 
 Copy this directory into a target repository as
-`docs/agent-loops/full-e2e-merge-loop/`.
+`docs/agent-loops/full-e2e-merge/`.
 
 ## Files
 

@@ -153,7 +153,7 @@ recorded in the pull request and Kanban completion note.
 ## Project Config
 
 The machine-readable policy lives in
-`docs/agent-loops/full-e2e-merge-loop/loop-config.json`.
+`docs/agent-loops/full-e2e-merge/loop-config.json`.
 
 | Field | Meaning |
 | --- | --- |
@@ -173,9 +173,9 @@ The machine-readable policy lives in
 For ticket `ABC-0001`, the default record paths are:
 
 - committed summary:
-  `docs/agent-loops/full-e2e-merge-loop/runs/ABC-0001/summary.md`
+  `docs/agent-loops/full-e2e-merge/runs/ABC-0001/summary.md`
 - ignored raw logs:
-  `docs/agent-loops/full-e2e-merge-loop/runs/ABC-0001/raw/`
+  `docs/agent-loops/full-e2e-merge/runs/ABC-0001/raw/`
 
 Commit concise summaries. Do not commit raw subagent transcripts, command logs,
 or sensitive local environment output.

@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "loop": "full-e2e-merge-loop",
+  "loop": "full-e2e-merge",
   "paths": {
     "workflowConfig": "docs/agents/project-workflow.json",
     "ticketWorkflow": "docs/agents/ticket-workflow.md",
     "issueTracker": "docs/agents/issue-tracker.md",
     "agentInstructions": "AGENTS.md",
     "plansDir": "docs/plans",
-    "loopDocsDir": "docs/agent-loops/full-e2e-merge-loop",
-    "loopContract": "docs/agent-loops/full-e2e-merge-loop/loop.md",
-    "runSummaryTemplate": "docs/agent-loops/full-e2e-merge-loop/templates/run-summary.md",
-    "runSummaryPathTemplate": "docs/agent-loops/full-e2e-merge-loop/runs/{ticketId}/summary.md",
-    "rawLogPathTemplate": "docs/agent-loops/full-e2e-merge-loop/runs/{ticketId}/raw/"
+    "loopDocsDir": "docs/agent-loops/full-e2e-merge",
+    "loopContract": "docs/agent-loops/full-e2e-merge/loop.md",
+    "runSummaryTemplate": "docs/agent-loops/full-e2e-merge/templates/run-summary.md",
+    "runSummaryPathTemplate": "docs/agent-loops/full-e2e-merge/runs/{ticketId}/summary.md",
+    "rawLogPathTemplate": "docs/agent-loops/full-e2e-merge/runs/{ticketId}/raw/"
   },
   "ticketSelection": {
     "source": "obsidian-kanban",

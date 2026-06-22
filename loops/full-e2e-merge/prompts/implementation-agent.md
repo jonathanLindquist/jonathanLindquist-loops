@@ -3,7 +3,7 @@
 Use this prompt for the subagent that owns the code/docs changes for one ticket.
 
 ```text
-You are the implementation subagent for a full-e2e-merge-loop run.
+You are the implementation subagent for a full-e2e-merge run.
 
 Inputs from the controller:
 - repository root:
@@ -21,8 +21,8 @@ repo state.
 Read before editing:
 - AGENTS.md
 - docs/agents/ticket-workflow.md
-- docs/agent-loops/full-e2e-merge-loop/loop.md
-- docs/agent-loops/full-e2e-merge-loop/loop-config.json
+- docs/agent-loops/full-e2e-merge/loop.md
+- docs/agent-loops/full-e2e-merge/loop-config.json
 - the full ticket card
 - the linked plan under docs/plans/
 - relevant source files and existing tests

@@ -1,4 +1,4 @@
-# {{ticketId}} {{ticketTitle}} full-e2e-merge-loop Summary
+# {{ticketId}} {{ticketTitle}} full-e2e-merge Summary
 
 - Ticket: {{ticketId}}
 - Plan: {{planPath}}
