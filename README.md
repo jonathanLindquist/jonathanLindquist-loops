@@ -15,6 +15,23 @@ logs local.
 - `loops/full-e2e-merge/`: the first loop definition.
 - `loops/<loop-id>/`: future loop definitions, each with its own config,
   prompts, templates, and run-record policy.
+- `src/full-e2e-merge/`: deterministic controller model for testing loop
+  orchestration without real agents or remotes.
+- `test/full-e2e-merge/`: scenario tests for loop gates, retries, and merge
+  authority.
+
+## Deterministic Verification
+
+Run the current loop harness with:
+
+```bash
+npm test
+```
+
+The harness drives scripted adapters for Obsidian, git, GitHub, subagents,
+checks, and run records. This verifies the loop's control flow without needing
+network access, real repositories, or nondeterministic agent output. See
+`docs/testing-loop-verification.md`.
 
 ## full-e2e-merge
 
