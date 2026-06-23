@@ -4,11 +4,11 @@ The loop should be tested as an orchestrator, not as a pile of prompts. The
 stable seam is a controller interface that drives adapters for external state:
 Obsidian Kanban, linked plans, git, GitHub, subagents, checks, and run records.
 
-`src/full-e2e-merge/run-loop.mjs` is the first executable model of that seam.
-It consumes the same `loops/full-e2e-merge/loop-config.json` that the real loop
-uses, then calls effect adapters in the order required by the loop contract.
-Tests provide scripted adapters, so each scenario is deterministic and has no
-network, git, GitHub, Obsidian, or LLM dependency.
+`src/<loop-id>/run-loop.mjs` files are executable models of that seam. Each
+controller consumes the same `loops/<loop-id>/loop-config.json` that the real
+loop uses, then calls effect adapters in the order required by its loop
+contract. Tests provide scripted adapters, so each scenario is deterministic and
+has no network, git, GitHub, Obsidian, or LLM dependency.
 
 Run the harness with:
 
@@ -29,6 +29,9 @@ The scenario suite should prove the controller behavior that matters most:
 - it stops after the configured review-fix limit.
 - it requires a current green gate before writing the run summary or merging.
 - it completes the ticket only after merge and confirms the board lane.
+- smaller loops, such as `implement-then-review`, stop at their documented
+  terminal state and do not borrow PR, merge, or Kanban completion authority
+  from larger loops.
 
 That is the whole loop skeleton. The subagent prompts still matter, but they are
 inputs to adapters; they should not be the only executable contract.

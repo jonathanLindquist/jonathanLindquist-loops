@@ -1,0 +1,4 @@
+# Commit concise per-ticket summaries only when a target project wants them.
+# Keep verbose/raw loop output local.
+*/raw/
+*/raw/**

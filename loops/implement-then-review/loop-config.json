@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "loop": "implement-then-review",
+  "paths": {
+    "workflowConfig": "docs/agents/project-workflow.json",
+    "ticketWorkflow": "docs/agents/ticket-workflow.md",
+    "issueTracker": "docs/agents/issue-tracker.md",
+    "agentInstructions": "AGENTS.md",
+    "plansDir": "docs/plans",
+    "loopDocsDir": "docs/agent-loops/implement-then-review",
+    "loopContract": "docs/agent-loops/implement-then-review/loop.md",
+    "runSummaryTemplate": "docs/agent-loops/implement-then-review/templates/run-summary.md",
+    "runSummaryPathTemplate": "docs/agent-loops/implement-then-review/runs/{ticketId}/summary.md",
+    "rawLogPathTemplate": "docs/agent-loops/implement-then-review/runs/{ticketId}/raw/"
+  },
+  "ticketSelection": {
+    "source": "obsidian-kanban",
+    "lane": "Backlog",
+    "strategy": "top-card-only",
+    "requiredTriageTag": "#ready-for-agent",
+    "ifTopCardIsUnready": "stop",
+    "ifCardAndPlanConflict": "stop"
+  },
+  "agents": {
+    "model": "ephemeral-subagents",
+    "implementationRole": "implementation-agent",
+    "reviewerRole": "thermos-reviewer-agent",
+    "reviewScope": "thermo-correctness-security-plus-code-quality",
+    "aggregateReviewSkill": "thermos:thermos",
+    "reviewSkills": [
+      "thermos:thermo-nuclear-review",
+      "thermos:thermo-nuclear-code-quality-review"
+    ]
+  },
+  "branching": {
+    "baseBranch": "main",
+    "branchNameTemplate": "codex/{ticketId}-{slug}",
+    "worktreeMode": "isolated-ticket-worktree",
+    "oneTicketPerBranch": true
+  },
+  "limits": {
+    "verificationRepairAttempts": 3
+  },
+  "checks": {
+    "ticketVerificationItems": "required",
+    "repoLocalChecks": "full-practical-suite",
+    "changedFileSecretScan": "required"
+  },
+  "review": {
+    "reviewTarget": "branch-diff-against-base",
+    "requiresImplementationCommit": true,
+    "repairPolicy": "no-automatic-review-fix-cycle",
+    "blockingFindingsPolicy": "record-and-stop-after-review",
+    "prDiscussionLookup": "not-applicable-without-pr"
+  },
+  "handoff": {
+    "terminalStatus": "reviewed",
+    "createPullRequest": false,
+    "merge": false,
+    "completeKanbanCard": false,
+    "leaveBranchAndWorktreeForHuman": true
+  },
+  "failurePolicy": {
+    "missingWorkflowDocs": "stop",
+    "dirtyTargetCheckout": "stop",
+    "unreadyTopBacklogCard": "stop",
+    "repeatedVerificationFailure": "stop",
+    "implementationCommitFailure": "stop",
+    "thermosReviewFailure": "stop",
+    "onStop": "leave-ticket-out-of-completed-and-record-blocker"
+  },
+  "records": {
+    "writeRunSummary": true,
+    "commitRunSummary": false,
+    "keepRawLogsLocal": true,
+    "rawLogsGitignored": true,
+    "finalReviewEvidenceLocation": "run-summary-and-controller-response"
+  }
+}

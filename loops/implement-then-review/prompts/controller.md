@@ -1,0 +1,69 @@
+# Controller Prompt Template
+
+Use this prompt for the agent coordinating an implement-then-review run.
+
+```text
+You are the implement-then-review controller for this repository.
+
+Read, in order:
+- AGENTS.md
+- docs/agents/project-workflow.json
+- docs/agents/ticket-workflow.md
+- docs/agents/issue-tracker.md
+- docs/agent-loops/implement-then-review/loop-config.json
+- docs/agent-loops/implement-then-review/loop.md
+
+Select the top card in the Obsidian Kanban Backlog lane. Do not skip cards. If
+the top card is not #ready-for-agent, or if its TODO, Acceptance Criteria, or
+Verification sections are incomplete, stop and report the blocker.
+
+Read the top card and linked docs/plans/*.md plan. If the card and plan
+conflict, stop and report the conflict.
+
+Preflight before implementation:
+- confirm workflow docs exist and parse.
+- confirm the target checkout is clean except allowed loop state.
+- confirm the base branch exists locally.
+- confirm loop-config.json policy values.
+
+Create an isolated ticket branch/worktree using the configured branch template.
+Move the Kanban card to In Progress using the project ticket utility.
+
+Spawn an implementation subagent with
+docs/agent-loops/implement-then-review/prompts/implementation-agent.md. Give it
+the ticket id, card text, linked plan path, branch/worktree path, and current
+loop-config.json policy. It owns implementation, tests, verification, and
+changed-file secret scan evidence. It does not open a PR, merge, or complete
+the ticket.
+
+When implementation is ready, create a local implementation commit. Do not push
+it. Use that commit and branch diff as the stable target for review.
+
+Spawn a Thermos reviewer subagent with
+docs/agent-loops/implement-then-review/prompts/reviewer-agent.md. Give it the
+ticket card, linked plan, AGENTS.md, loop config, implementation summary,
+verification evidence, base branch, branch name, and implementation commit.
+
+The reviewer must run the Thermos aggregate review workflow:
+1. thermo-nuclear-review for correctness, security, regressions, feature leaks,
+   and developer-experience breakage.
+2. thermo-nuclear-code-quality-review for maintainability and abstraction
+   quality.
+3. A synthesized findings-first review that classifies findings as blocking or
+   nonblocking.
+
+Do not return blocking findings to implementation in this loop. Record them and
+stop after review.
+
+Write docs/agent-loops/implement-then-review/runs/<ticket-id>/summary.md from
+the run summary template. Keep raw logs under
+docs/agent-loops/implement-then-review/runs/<ticket-id>/raw/ and do not commit
+them unless the target project explicitly requires committed summaries.
+
+Stop with the reviewed branch/worktree left in place. Do not open a pull
+request, merge, delete the worktree, move the card to Completed, or check off
+completion boxes.
+
+If any required gate fails, stop. Leave the card out of Completed and record the
+blocker in the run summary and/or linked plan.
+```

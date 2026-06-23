@@ -11,7 +11,11 @@ import {
 
 export { loadLoopConfig, renderTemplate, slugify } from "../loop-core.mjs";
 
-export async function runFullE2eMergeLoop({ config, effects, clock = fixedClock }) {
+export async function runImplementThenReviewLoop({
+  config,
+  effects,
+  clock = fixedClock,
+}) {
   assertConfig(config);
   assertEffects(effects);
 
@@ -21,9 +25,8 @@ export async function runFullE2eMergeLoop({ config, effects, clock = fixedClock 
   let branchName;
   let worktree;
   let implementation;
-  let pullRequest;
+  let implementationCommit;
   let review;
-  let reviewFixCyclesUsed = 0;
 
   const record = (event, details = {}) => {
     transcript.push({ event, ...details });
@@ -45,8 +48,7 @@ export async function runFullE2eMergeLoop({ config, effects, clock = fixedClock 
       reason,
       ticketId: card?.ticketId,
       branchName,
-      pullRequestUrl: pullRequest?.url,
-      reviewFixCyclesUsed,
+      implementationCommit: implementationCommit?.commit,
       transcript,
     };
   };
@@ -109,7 +111,6 @@ export async function runFullE2eMergeLoop({ config, effects, clock = fixedClock 
 
   for (const [effectName, args, reason] of [
     ["assertTargetCheckoutClean", {}, "dirty-target-checkout"],
-    ["assertGithubReady", {}, "missing-github-auth"],
     [
       "assertBaseBranchReady",
       { baseBranch: config.branching.baseBranch },
@@ -147,7 +148,6 @@ export async function runFullE2eMergeLoop({ config, effects, clock = fixedClock 
     gate = await ok(
       "runImplementationAgent",
       {
-        mode: "implementation",
         attempt,
         ticketId: card.ticketId,
         card,
@@ -176,164 +176,77 @@ export async function runFullE2eMergeLoop({ config, effects, clock = fixedClock 
   }
 
   gate = await ok(
-    "commitPushOpenPullRequest",
+    "commitImplementation",
     { ticketId: card.ticketId, branchName, implementation },
-    "cannot-open-pull-request",
+    "implementation-commit-failed",
   );
   if (gate.blocked) return gate.result;
-  pullRequest = gate.value;
-
-  const maxReviewFixCycles = config.limits.reviewFixCycles ?? 0;
-
-  while (true) {
-    gate = await ok(
-      "runReviewerAgent",
-      {
-        ticketId: card.ticketId,
-        card,
-        plan,
-        pullRequest,
-        implementation,
-        config,
-        cycle: reviewFixCyclesUsed + 1,
-      },
-      "reviewer-agent-failed",
-    );
-    if (gate.blocked) return gate.result;
-    review = normalizeReview(gate.value);
-
-    if (review.blockingFindings.length === 0) break;
-
-    if (reviewFixCyclesUsed >= maxReviewFixCycles) {
-      return block("unresolved-blocking-review-findings", {
-        findings: review.blockingFindings,
-        reviewFixCyclesUsed,
-      });
-    }
-
-    reviewFixCyclesUsed += 1;
-    gate = await ok(
-      "runImplementationAgent",
-      {
-        mode: "review-fix",
-        attempt: reviewFixCyclesUsed,
-        ticketId: card.ticketId,
-        card,
-        plan,
-        branchName,
-        worktreePath: worktree.path,
-        pullRequest,
-        findings: review.blockingFindings,
-        config,
-      },
-      "review-fix-agent-failed",
-    );
-    if (gate.blocked) return gate.result;
-    implementation = gate.value;
-
-    if (implementation.status !== "ready") {
-      return block("repeated-verification-failure", {
-        mode: "review-fix",
-        reviewFixCyclesUsed,
-        detail: implementation.reason,
-      });
-    }
-
-    gate = await ok(
-      "updatePullRequestAfterFix",
-      { ticketId: card.ticketId, pullRequest, implementation },
-      "cannot-update-pull-request-after-fix",
-    );
-    if (gate.blocked) return gate.result;
-  }
+  implementationCommit = gate.value;
 
   gate = await ok(
-    "verifyGreenGate",
+    "runThermosReview",
     {
       ticketId: card.ticketId,
       card,
       plan,
       branchName,
-      pullRequest,
+      baseBranch: config.branching.baseBranch,
+      worktreePath: worktree.path,
       implementation,
-      review,
+      implementationCommit,
+      reviewSkills: config.agents.reviewSkills,
+      aggregateReviewSkill: config.agents.aggregateReviewSkill,
+      config,
     },
-    "green-gate-failed",
+    "thermos-review-failed",
   );
   if (gate.blocked) return gate.result;
-  if (gate.value?.green !== true) {
-    return block("green-gate-failed", { detail: gate.value?.reason });
+  review = normalizeReview(gate.value);
+
+  if (review.status === "blocked") {
+    return block("thermos-review-blocked", { detail: review.reason });
   }
+
+  const result =
+    review.blockingFindings.length > 0
+      ? "reviewed-with-blocking-findings"
+      : "reviewed";
 
   gate = await ok(
     "writeRunSummary",
     {
       ticketId: card.ticketId,
-      result: "merged",
+      result,
       completedAt: clock(),
       card,
       plan,
       branchName,
-      pullRequest,
+      worktree,
       implementation,
+      implementationCommit,
       review,
-      reviewFixCyclesUsed,
     },
     "cannot-write-run-summary",
   );
   if (gate.blocked) return gate.result;
 
-  gate = await ok(
-    "commitRunSummary",
-    { ticketId: card.ticketId, branchName },
-    "cannot-commit-run-summary",
-  );
-  if (gate.blocked) return gate.result;
-
-  gate = await ok(
-    "squashMergeAndCleanup",
-    { ticketId: card.ticketId, branchName, pullRequest, worktree },
-    "cannot-merge-or-clean-up",
-  );
-  if (gate.blocked) return gate.result;
-  const merge = gate.value;
-
-  gate = await ok(
-    "completeTicket",
-    {
-      ticketId: card.ticketId,
-      planPath: card.planPath,
-      merge,
-      pullRequest,
-    },
-    "cannot-complete-ticket",
-  );
-  if (gate.blocked) return gate.result;
-
-  gate = await ok(
-    "confirmTicketCompleted",
-    { ticketId: card.ticketId },
-    "kanban-completion-unconfirmed",
-  );
-  if (gate.blocked) return gate.result;
-  if (gate.value?.completed !== true) {
-    return block("kanban-completion-unconfirmed", { detail: gate.value });
-  }
-
-  record("merged", {
+  record("reviewed", {
     ticketId: card.ticketId,
     branchName,
-    pullRequestUrl: pullRequest.url,
-    mergeCommit: merge.commit,
+    implementationCommit: implementationCommit.commit,
+    result,
+    recommendation: review.recommendation,
   });
 
   return {
-    status: "merged",
+    status: "reviewed",
+    result,
     ticketId: card.ticketId,
     branchName,
-    pullRequestUrl: pullRequest.url,
-    mergeCommit: merge.commit,
-    reviewFixCyclesUsed,
+    implementationCommit: implementationCommit.commit,
+    reviewRecommendation: review.recommendation,
+    blockingFindings: review.blockingFindings,
+    nonblockingFindings: review.nonblockingFindings,
     transcript,
   };
 }
@@ -342,10 +255,14 @@ function assertConfig(config) {
   assertConfigSections(config, [
     "paths",
     "ticketSelection",
+    "agents",
     "branching",
     "limits",
     "checks",
-    "merge",
+    "review",
+    "handoff",
+    "failurePolicy",
+    "records",
   ]);
 }
 
@@ -356,19 +273,12 @@ function assertEffects(effects) {
     "readLinkedPlan",
     "compareCardAndPlan",
     "assertTargetCheckoutClean",
-    "assertGithubReady",
     "assertBaseBranchReady",
     "moveCard",
     "createTicketWorktree",
     "runImplementationAgent",
-    "commitPushOpenPullRequest",
-    "runReviewerAgent",
-    "updatePullRequestAfterFix",
-    "verifyGreenGate",
+    "commitImplementation",
+    "runThermosReview",
     "writeRunSummary",
-    "commitRunSummary",
-    "squashMergeAndCleanup",
-    "completeTicket",
-    "confirmTicketCompleted",
   ]);
 }
