@@ -8,8 +8,8 @@
     "agentInstructions": "AGENTS.md",
     "plansDir": "docs/plans",
     "loopDocsDir": "docs/agent-loops/full-e2e-merge",
-    "loopContract": "docs/agent-loops/full-e2e-merge/loop.md",
-    "runSummaryTemplate": "docs/agent-loops/full-e2e-merge/templates/run-summary.md",
+    "loopRef": "docs/agent-loops/full-e2e-merge/loop-ref.json",
+    "loopConfig": "docs/agent-loops/full-e2e-merge/loop-config.json",
     "runSummaryPathTemplate": "docs/agent-loops/full-e2e-merge/runs/{ticketId}/summary.md",
     "rawLogPathTemplate": "docs/agent-loops/full-e2e-merge/runs/{ticketId}/raw/"
   },

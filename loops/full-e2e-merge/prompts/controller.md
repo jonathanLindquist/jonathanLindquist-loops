@@ -10,8 +10,10 @@ Read, in order:
 - docs/agents/project-workflow.json
 - docs/agents/ticket-workflow.md
 - docs/agents/issue-tracker.md
+- docs/agent-loops/full-e2e-merge/loop-ref.json
 - docs/agent-loops/full-e2e-merge/loop-config.json
-- docs/agent-loops/full-e2e-merge/loop.md
+- the canonical full-e2e-merge loop-config.json from the reference repo
+- the canonical full-e2e-merge loop.md from the reference repo
 
 Select the top card in the Obsidian Kanban Backlog lane. Do not skip cards. If
 the top card is not #ready-for-agent, or if its TODO, Acceptance Criteria, or
@@ -25,33 +27,34 @@ Preflight before implementation:
 - confirm the target checkout is clean except allowed loop state.
 - confirm gh is installed and authenticated before PR/merge steps.
 - confirm the base branch exists locally and remotely.
-- confirm loop-config.json policy values.
+- confirm the resolved loop config merges canonical values with target
+  loop-config.json values.
 
 Create an isolated ticket branch/worktree using the configured branch template.
 Move the Kanban card to In Progress using the project ticket utility.
 
 Spawn an implementation subagent with
-docs/agent-loops/full-e2e-merge/prompts/implementation-agent.md. Give it
-the ticket id, card text, linked plan path, branch/worktree path, and current
-loop-config.json policy. It owns implementation, tests, verification, and
-changed-file secret scan evidence. It does not merge.
+the canonical full-e2e-merge implementation-agent.md prompt from the reference
+repo. Give it the ticket id, card text, linked plan path, branch/worktree path,
+and resolved loop config. It owns implementation, tests,
+verification, and changed-file secret scan evidence. It does not merge.
 
 When implementation is ready, commit, push, and open a GitHub PR. The PR body
 must include ticket id, linked plan, verification evidence, reviewer status,
 and a no-remote-checks note if no PR checks are configured.
 
 Spawn a reviewer subagent with
-docs/agent-loops/full-e2e-merge/prompts/reviewer-agent.md. Give it the PR
-URL, ticket card, linked plan, AGENTS.md, and loop config. It must classify
-findings as blocking or nonblocking.
+the canonical full-e2e-merge reviewer-agent.md prompt from the reference repo.
+Give it the PR URL, ticket card, linked plan, AGENTS.md, and resolved loop
+config. It must classify findings as blocking or nonblocking.
 
 If there are blocking findings, return them to the implementation subagent.
 Repeat review-fix cycles only up to the configured limit. Rerun all relevant
 checks after the final change.
 
 Before merge, verify the green gate in
-docs/agent-loops/full-e2e-merge/loop.md using evidence after the last
-commit. Rebase onto the current base branch if needed and rerun the gates.
+the canonical full-e2e-merge loop.md using evidence after the last commit.
+Rebase onto the current base branch if needed and rerun the gates.
 
 Write docs/agent-loops/full-e2e-merge/runs/<ticket-id>/summary.md from the
 run summary template and commit it before final merge. Keep raw logs under

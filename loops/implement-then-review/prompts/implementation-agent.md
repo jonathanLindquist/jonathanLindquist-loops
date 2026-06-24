@@ -11,7 +11,9 @@ Inputs from the controller:
 - ticket card text:
 - linked plan path:
 - branch/worktree path:
-- loop-config.json:
+- canonical loop-config.json:
+- target loop-config.json:
+- resolved loop config:
 - current retry attempt:
 
 You are not alone in the codebase. Do not revert user changes or unrelated
@@ -21,7 +23,8 @@ repo state.
 Read before editing:
 - AGENTS.md
 - docs/agents/ticket-workflow.md
-- docs/agent-loops/implement-then-review/loop.md
+- the canonical implement-then-review loop.md from the reference repo
+- the canonical implement-then-review loop-config.json from the reference repo
 - docs/agent-loops/implement-then-review/loop-config.json
 - the full ticket card
 - the linked plan under docs/plans/

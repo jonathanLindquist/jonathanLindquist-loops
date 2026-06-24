@@ -8,8 +8,8 @@
     "agentInstructions": "AGENTS.md",
     "plansDir": "docs/plans",
     "loopDocsDir": "docs/agent-loops/implement-then-review",
-    "loopContract": "docs/agent-loops/implement-then-review/loop.md",
-    "runSummaryTemplate": "docs/agent-loops/implement-then-review/templates/run-summary.md",
+    "loopRef": "docs/agent-loops/implement-then-review/loop-ref.json",
+    "loopConfig": "docs/agent-loops/implement-then-review/loop-config.json",
     "runSummaryPathTemplate": "docs/agent-loops/implement-then-review/runs/{ticketId}/summary.md",
     "rawLogPathTemplate": "docs/agent-loops/implement-then-review/runs/{ticketId}/raw/"
   },

@@ -2,13 +2,14 @@
 
 Reusable loop scaffolds for project-local agent workflows.
 
-This repository is a template source, not the runtime home for project loop
-history. Each loop lives under `loops/<loop-id>/` and is copied into a target
-repository that already uses `setup-project-workflow`.
+This repository is the reference source for loop definitions. Each canonical
+loop lives under `loops/<loop-id>/`. Target repositories that already use
+`setup-project-workflow` install a thin reference marker instead of copying the
+full loop by default.
 
 Target repositories should keep each loop isolated under
-`docs/agent-loops/<loop-id>/`. Commit concise run summaries there, and keep raw
-logs local.
+`docs/agent-loops/<loop-id>/`. That directory owns project-specific loop config
+and run history. Commit concise run summaries there, and keep raw logs local.
 
 ## Repository Structure
 
@@ -21,6 +22,40 @@ logs local.
   orchestration without real agents or remotes.
 - `test/<loop-id>/`: scenario tests for loop gates, retries, and terminal
   authority.
+- `scripts/install_agent_loop.mjs`: installs a thin target-project reference to
+  a canonical loop in this repo.
+
+## Installing A Loop
+
+Run the installer from the target project root:
+
+```bash
+LOOPS_REPO="/path/to/downloaded/jonathanLindquist-loops"
+node "$LOOPS_REPO/scripts/install_agent_loop.mjs" \
+  --project-root "$PWD" \
+  --loop implement-then-review
+```
+
+`--project-root` is the repo receiving the loop. The installer discovers the
+reference repo from its own script location, so the generated `loop-ref.json`
+points back to the downloaded loop repo even when the command runs from a
+different project.
+
+The installer creates:
+
+```text
+docs/agent-loops/<loop-id>/
+|-- loop-ref.json
+|-- loop-config.json
+`-- runs/
+    `-- .gitignore
+```
+
+`loop-ref.json` records reference mode without an absolute machine-specific
+source path. `loop-config.json` stores project-local loop values. At runtime,
+the resolver deep-merges the target repo config over the canonical config from
+this repo. Re-run the installer any time; it preserves an existing loop config
+unless `--force` is passed.
 
 ## Deterministic Verification
 
@@ -47,16 +82,17 @@ The first loop turns the top ready Backlog ticket into a merged pull request:
 6. Squash merge when green.
 7. Complete the Kanban card and retain a concise run summary.
 
-Copy into a target project from this repository root:
+Install into a target project:
 
 ```bash
-TARGET_REPO=/path/to/target-repo
-mkdir -p "$TARGET_REPO/docs/agent-loops/full-e2e-merge"
-cp -R loops/full-e2e-merge/. "$TARGET_REPO/docs/agent-loops/full-e2e-merge/"
+LOOPS_REPO="/path/to/downloaded/jonathanLindquist-loops"
+node "$LOOPS_REPO/scripts/install_agent_loop.mjs" \
+  --project-root "$TARGET_REPO" \
+  --loop full-e2e-merge
 ```
 
-Then customize `docs/agent-loops/full-e2e-merge/loop-config.json` for that
-project.
+Then customize `docs/agent-loops/full-e2e-merge/loop-config.json` only when
+that project needs project-specific values.
 
 ## implement-then-review
 
@@ -75,13 +111,14 @@ with a Thermos review result:
 It does not open a PR, merge, complete the Kanban card, or run automatic
 review-fix cycles.
 
-Copy into a target project from this repository root:
+Install into a target project:
 
 ```bash
-TARGET_REPO=/path/to/target-repo
-mkdir -p "$TARGET_REPO/docs/agent-loops/implement-then-review"
-cp -R loops/implement-then-review/. "$TARGET_REPO/docs/agent-loops/implement-then-review/"
+LOOPS_REPO="/path/to/downloaded/jonathanLindquist-loops"
+node "$LOOPS_REPO/scripts/install_agent_loop.mjs" \
+  --project-root "$TARGET_REPO" \
+  --loop implement-then-review
 ```
 
-Then customize `docs/agent-loops/implement-then-review/loop-config.json` for
-that project.
+Then customize `docs/agent-loops/implement-then-review/loop-config.json`
+only when that project needs project-specific values.

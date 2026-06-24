@@ -150,14 +150,16 @@ When green, the controller may:
 The committed run summary records pre-merge evidence. The final merge result is
 recorded in the pull request and Kanban completion note.
 
-## Project Config
+## Loop Config
 
-The machine-readable policy lives in
-`docs/agent-loops/full-e2e-merge/loop-config.json`.
+The canonical machine-readable policy lives in
+`loops/full-e2e-merge/loop-config.json` in the reference repo. Target-project
+values live in `docs/agent-loops/full-e2e-merge/loop-config.json` and override
+equally named canonical values.
 
 | Field | Meaning |
 | --- | --- |
-| `paths.*` | Project-local docs, plan, prompt, and run-record paths. |
+| `paths.*` | Project-local workflow docs, marker files, and run-record paths. |
 | `ticketSelection.strategy` | `top-card-only`; the loop never skips the top Backlog card. |
 | `ticketSelection.requiredTriageTag` | The tag required to begin work, default `#ready-for-agent`. |
 | `agents.model` | Default agent model is ephemeral subagents, not durable project threads. |

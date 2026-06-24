@@ -10,8 +10,10 @@ Read, in order:
 - docs/agents/project-workflow.json
 - docs/agents/ticket-workflow.md
 - docs/agents/issue-tracker.md
+- docs/agent-loops/implement-then-review/loop-ref.json
 - docs/agent-loops/implement-then-review/loop-config.json
-- docs/agent-loops/implement-then-review/loop.md
+- the canonical implement-then-review loop-config.json from the reference repo
+- the canonical implement-then-review loop.md from the reference repo
 
 Select the top card in the Obsidian Kanban Backlog lane. Do not skip cards. If
 the top card is not #ready-for-agent, or if its TODO, Acceptance Criteria, or
@@ -24,25 +26,27 @@ Preflight before implementation:
 - confirm workflow docs exist and parse.
 - confirm the target checkout is clean except allowed loop state.
 - confirm the base branch exists locally.
-- confirm loop-config.json policy values.
+- confirm the resolved loop config merges canonical values with target
+  loop-config.json values.
 
 Create an isolated ticket branch/worktree using the configured branch template.
 Move the Kanban card to In Progress using the project ticket utility.
 
 Spawn an implementation subagent with
-docs/agent-loops/implement-then-review/prompts/implementation-agent.md. Give it
-the ticket id, card text, linked plan path, branch/worktree path, and current
-loop-config.json policy. It owns implementation, tests, verification, and
-changed-file secret scan evidence. It does not open a PR, merge, or complete
-the ticket.
+the canonical implement-then-review implementation-agent.md prompt from the
+reference repo. Give it the ticket id, card text, linked plan path,
+branch/worktree path, and resolved loop config. It owns
+implementation, tests, verification, and changed-file secret scan evidence. It
+does not open a PR, merge, or complete the ticket.
 
 When implementation is ready, create a local implementation commit. Do not push
 it. Use that commit and branch diff as the stable target for review.
 
 Spawn a Thermos reviewer subagent with
-docs/agent-loops/implement-then-review/prompts/reviewer-agent.md. Give it the
-ticket card, linked plan, AGENTS.md, loop config, implementation summary,
-verification evidence, base branch, branch name, and implementation commit.
+the canonical implement-then-review reviewer-agent.md prompt from the reference
+repo. Give it the ticket card, linked plan, AGENTS.md, resolved loop config,
+implementation summary, verification evidence, base branch, branch name, and
+implementation commit.
 
 The reviewer must run the Thermos aggregate review workflow:
 1. thermo-nuclear-review for correctness, security, regressions, feature leaks,

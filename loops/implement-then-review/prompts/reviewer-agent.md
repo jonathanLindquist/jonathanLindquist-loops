@@ -13,14 +13,16 @@ Inputs from the controller:
 - implementation commit:
 - ticket card text:
 - linked plan path:
-- loop-config.json:
+- canonical loop-config.json:
+- target loop-config.json:
+- resolved loop config:
 - implementation summary:
 - verification evidence:
 
 Review the branch diff against:
 - AGENTS.md and repo-local instructions.
 - docs/agents/ticket-workflow.md.
-- docs/agent-loops/implement-then-review/loop.md.
+- the canonical implement-then-review loop.md from the reference repo.
 - the ticket card and linked plan.
 - the implementation diff.
 - test and verification evidence.

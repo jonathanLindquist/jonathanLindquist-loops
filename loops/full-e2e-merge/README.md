@@ -1,10 +1,19 @@
 # full-e2e-merge
 
-Project-local loop definition and run records for taking one ready ticket all
-the way through implementation, review, pull request, merge, and closeout.
+Canonical loop definition for taking one ready ticket all the way through
+implementation, review, pull request, merge, and closeout.
 
-Copy this directory into a target repository as
-`docs/agent-loops/full-e2e-merge/`.
+Install a thin target-project reference with:
+
+```bash
+LOOPS_REPO="/path/to/downloaded/jonathanLindquist-loops"
+node "$LOOPS_REPO/scripts/install_agent_loop.mjs" \
+  --project-root "$PWD" \
+  --loop full-e2e-merge
+```
+
+The installer treats `--project-root` as the target repo and derives the
+reference repo from its own script location.
 
 ## Files
 
@@ -14,8 +23,9 @@ Copy this directory into a target repository as
 - `prompts/`: reusable prompt templates for controller, implementation, and
   reviewer agents.
 - `templates/run-summary.md`: committed summary format for each ticket run.
-- `runs/`: project-local run history. Commit `summary.md`; keep `raw/` logs
-  ignored.
+
+Target projects store only `loop-ref.json`, `loop-config.json`, and `runs/`
+under `docs/agent-loops/full-e2e-merge/`.
 
 ## Required Project Shape
 

@@ -159,14 +159,17 @@ After review, the controller stops with:
 - a clear next-action note: fix findings, open a PR, hand off to another loop,
   or stop for human input.
 
-## Project Config
+## Loop Config
 
-The machine-readable policy lives in
-`docs/agent-loops/implement-then-review/loop-config.json`.
+The canonical machine-readable policy lives in
+`loops/implement-then-review/loop-config.json` in the reference repo.
+Target-project values live in
+`docs/agent-loops/implement-then-review/loop-config.json` and override equally
+named canonical values.
 
 | Field | Meaning |
 | --- | --- |
-| `paths.*` | Project-local docs, plan, prompt, and run-record paths. |
+| `paths.*` | Project-local workflow docs, marker files, and run-record paths. |
 | `ticketSelection.strategy` | `top-card-only`; the loop never skips the top Backlog card. |
 | `agents.reviewSkills` | Thermos rubrics the reviewer must run and synthesize. |
 | `branching.branchNameTemplate` | Branch naming policy, default `codex/{ticketId}-{slug}`. |

@@ -1,10 +1,19 @@
 # implement-then-review
 
-Project-local loop definition and run records for taking one ready ticket
-through scoped implementation and a Thermos review pass.
+Canonical loop definition for taking one ready ticket through scoped
+implementation and a Thermos review pass.
 
-Copy this directory into a target repository as
-`docs/agent-loops/implement-then-review/`.
+Install a thin target-project reference with:
+
+```bash
+LOOPS_REPO="/path/to/downloaded/jonathanLindquist-loops"
+node "$LOOPS_REPO/scripts/install_agent_loop.mjs" \
+  --project-root "$PWD" \
+  --loop implement-then-review
+```
+
+The installer treats `--project-root` as the target repo and derives the
+reference repo from its own script location.
 
 ## Files
 
@@ -14,8 +23,9 @@ Copy this directory into a target repository as
 - `prompts/`: reusable prompt templates for controller, implementation, and
   Thermos reviewer agents.
 - `templates/run-summary.md`: summary format for each ticket run.
-- `runs/`: project-local run history. Commit summaries only when a target
-  project explicitly wants them committed; keep `raw/` logs ignored.
+
+Target projects store only `loop-ref.json`, `loop-config.json`, and `runs/`
+under `docs/agent-loops/implement-then-review/`.
 
 ## Required Project Shape
 

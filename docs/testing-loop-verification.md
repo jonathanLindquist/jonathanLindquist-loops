@@ -10,6 +10,12 @@ loop uses, then calls effect adapters in the order required by its loop
 contract. Tests provide scripted adapters, so each scenario is deterministic and
 has no network, git, GitHub, Obsidian, or LLM dependency.
 
+Loop installation and reference-mode resolution have their own seam:
+`src/loop-installer.mjs` creates thin target-project markers, and
+`src/loop-resolver.mjs` combines canonical loop config with target
+`loop-config.json` values and detected git facts. Tests for those modules use
+temporary target repos.
+
 Run the harness with:
 
 ```bash
@@ -44,11 +50,13 @@ As the repo grows, add tests in this order:
    policy. These are the fastest tests and should cover most loop behavior.
 2. **Parser/adapter tests** for real board-card parsing, plan loading, git
    status parsing, GitHub check interpretation, and summary rendering.
-3. **Fixture-repo integration tests** that create a temporary target repo,
+3. **Installer/resolver tests** for target-repo marker creation, target config
+   merging, and git fact detection.
+4. **Fixture-repo integration tests** that create a temporary target repo,
    temporary board file, fake `gh`, and fake agent scripts. These should prove
    the real adapters mutate files correctly without touching a real remote.
-4. **Live dry-run canaries** behind an explicit opt-in flag. These can use real
-   agents, but must stop before merge unless the project config explicitly
+5. **Live dry-run canaries** behind an explicit opt-in flag. These can use real
+   agents, but must stop before merge unless the target loop config explicitly
    permits merge.
 
 Keep the interface small. If adding a new loop capability requires tests to
