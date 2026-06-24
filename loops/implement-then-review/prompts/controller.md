@@ -35,7 +35,7 @@ Move the Kanban card to In Progress using the project ticket utility.
 Spawn an implementation subagent with
 the canonical implement-then-review implementation-agent.md prompt from the
 reference repo. Give it the ticket id, card text, linked plan path,
-branch/worktree path, and resolved loop config. It owns
+branch/worktree path, resolved loop config, and `mode: implementation`. It owns
 implementation, tests, verification, and changed-file secret scan evidence. It
 does not open a PR, merge, or complete the ticket.
 
@@ -56,17 +56,29 @@ The reviewer must run the Thermos aggregate review workflow:
 3. A synthesized findings-first review that classifies findings as blocking or
    nonblocking.
 
-Do not return blocking findings to implementation in this loop. Record them and
-stop after review.
+If the reviewer returns blocking findings, send only those blocking findings
+back to the implementation subagent with `mode: review-fix`, the review cycle,
+the latest implementation summary, and the latest verification evidence. The
+implementation subagent owns fixing the findings and rerunning evidence after
+the final review-fix change.
+
+After each ready review-fix response, create a new local implementation commit
+for the current diff. Do not push it. Run Thermos review again against the
+latest branch diff, latest implementation summary, latest verification evidence,
+and latest implementation commit.
+
+Repeat review-fix cycles only until the reviewer returns zero blocking findings
+or `limits.reviewFixCycles` is exhausted. If the limit is exhausted, stop with
+unresolved blocking findings and record the blocker. Do not write a successful
+reviewed summary for unresolved blocking findings.
 
 Write docs/agent-loops/implement-then-review/runs/<ticket-id>/summary.md from
 the run summary template. Keep raw logs under
 docs/agent-loops/implement-then-review/runs/<ticket-id>/raw/ and do not commit
 them unless the target project explicitly requires committed summaries.
 
-Stop with the reviewed branch/worktree left in place. Do not open a pull
-request, merge, delete the worktree, move the card to Completed, or check off
-completion boxes.
+Stop with the branch/worktree left in place. Do not open a pull request, merge,
+delete the worktree, move the card to Completed, or check off completion boxes.
 
 If any required gate fails, stop. Leave the card out of Completed and record the
 blocker in the run summary and/or linked plan.

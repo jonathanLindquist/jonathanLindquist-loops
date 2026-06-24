@@ -97,7 +97,7 @@ that project needs project-specific values.
 ## implement-then-review
 
 The smaller loop turns the top ready Backlog ticket into an implemented branch
-with a Thermos review result:
+that has passed Thermos review:
 
 1. Read the project workflow docs, Obsidian Kanban board, and linked plan.
 2. Work the top Backlog card only when it is `#ready-for-agent`.
@@ -106,10 +106,13 @@ with a Thermos review result:
 5. Create a local implementation commit.
 6. Use a Thermos reviewer subagent to run correctness/security and code-quality
    review passes.
-7. Write a concise run summary and stop with the branch/worktree left in place.
+7. Send blocking Thermos findings back to the implementation subagent for
+   bounded review-fix cycles.
+8. Write a concise run summary and stop with the branch/worktree left in place
+   once Thermos returns zero blocking findings.
 
-It does not open a PR, merge, complete the Kanban card, or run automatic
-review-fix cycles.
+If blocking findings remain after the configured review-fix limit, the loop
+stops as blocked. It does not open a PR, merge, or complete the Kanban card.
 
 Install into a target project:
 

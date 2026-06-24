@@ -12,8 +12,9 @@ The project-local source of truth remains:
 - `docs/plans/*.md` for durable ticket plans and completion notes.
 
 This loop is intentionally smaller than `full-e2e-merge`: it implements, runs
-Thermos review, writes a review summary, and stops. It does not open a pull
-request, merge, complete the Kanban card, or run automatic review-fix cycles.
+Thermos review, routes blocking findings through bounded review-fix cycles, and
+stops with a reviewed branch or a blocked run. It does not open a pull request,
+merge, or complete the Kanban card.
 
 ## Loop Diagram
 
@@ -27,15 +28,19 @@ flowchart TD
   F --> G["Thermos reviewer runs correctness/security pass"]
   G --> H["Thermos reviewer runs code-quality pass"]
   H --> I["Synthesize blocking + nonblocking findings"]
-  I --> J["Write run summary"]
-  J --> K["Stop with reviewed branch/worktree"]
+  I --> J{"Blocking findings?"}
+  J -- yes --> K["Implementation subagent fixes findings"]
+  K --> L["Create local review-fix commit"]
+  L --> G
+  J -- no --> M["Write run summary"]
+  M --> N["Stop with reviewed branch/worktree"]
 ```
 
 ## Operating Contract
 
 One loop run owns one ticket, one branch, one worktree, one implementation
-sequence, one local implementation commit, one Thermos review sequence, and one
-summary.
+sequence, one or more local implementation commits, one Thermos review sequence,
+bounded review-fix cycles, and one summary.
 
 The controller must select the top card in the `Backlog` lane. If that card is
 not tagged `#ready-for-agent`, or if it lacks ticket-specific TODO,
@@ -54,9 +59,10 @@ the ticket, the linked plan, and repo instructions. It runs the Thermos aggregat
 workflow: first `thermos:thermo-nuclear-review`, then
 `thermos:thermo-nuclear-code-quality-review`, then a synthesized review.
 
-Blocking findings end the loop as a reviewed branch with changes requested. The
-controller does not send findings back through implementation. A human or a
-later loop decides whether to fix, open a PR, merge, or close the ticket.
+Blocking findings are returned to the implementation subagent while configured
+review-fix cycles remain. If the reviewer still returns blocking findings after
+the limit, the controller stops with `unresolved-blocking-review-findings`. A
+human or a later loop decides whether to open a PR, merge, or close the ticket.
 
 ## Preflight Gate
 
@@ -100,6 +106,12 @@ After the implementation gate passes, the controller creates a local
 implementation commit so the review target is a stable diff against the base
 branch. The loop does not push this commit.
 
+During review-fix cycles, the implementation subagent must address only the
+blocking findings and directly required follow-up changes. It must rerun
+relevant ticket verification, focused checks, the fullest practical repo check,
+and changed-file secret scan/review after the final review-fix change before
+returning `ready`.
+
 ## Thermos Review Gate
 
 The Thermos reviewer must inspect the branch diff and ticket context. Findings
@@ -126,6 +138,11 @@ Blocking findings include:
 Nonblocking findings can be recorded in the summary without blocking the review
 result.
 
+Blocking findings are sent back to the implementation subagent until either:
+
+- the reviewer returns zero blocking findings, or
+- `limits.reviewFixCycles` is exhausted.
+
 The reviewer does not rewrite the implementation, open a pull request, merge, or
 complete the Kanban card.
 
@@ -139,12 +156,12 @@ The loop has reached its intended terminal state when:
 - focused and full practical repo checks passed.
 - changed-file secret scan/review passed.
 - a local implementation commit exists.
-- Thermos review completed and classified findings.
+- Thermos review completed and returned zero blocking findings.
 - the run summary records the implementation, verification, and review result.
 
-The terminal status is `reviewed`. If Thermos found blocking findings, the
-result is `reviewed-with-blocking-findings`; that is still a completed loop run,
-not permission to merge.
+The terminal status is `reviewed` only when Thermos returns zero blocking
+findings. If blocking findings remain after the review-fix limit, the loop stops
+as `blocked` with `unresolved-blocking-review-findings`.
 
 ## Handoff
 
@@ -156,8 +173,8 @@ After review, the controller stops with:
   `docs/agent-loops/implement-then-review/runs/<ticket-id>/summary.md`.
 - raw logs kept under
   `docs/agent-loops/implement-then-review/runs/<ticket-id>/raw/` and ignored.
-- a clear next-action note: fix findings, open a PR, hand off to another loop,
-  or stop for human input.
+- a clear next-action note: open a PR, hand off to another loop, or stop for
+  human input after review passes; fix unresolved findings when the loop blocks.
 
 ## Loop Config
 
@@ -173,9 +190,10 @@ named canonical values.
 | `ticketSelection.strategy` | `top-card-only`; the loop never skips the top Backlog card. |
 | `agents.reviewSkills` | Thermos rubrics the reviewer must run and synthesize. |
 | `branching.branchNameTemplate` | Branch naming policy, default `codex/{ticketId}-{slug}`. |
-| `limits.verificationRepairAttempts` | Implementation verification retry budget. |
+| `limits.verificationRepairAttempts` | Initial implementation verification retry budget. |
+| `limits.reviewFixCycles` | Blocking Thermos finding repair budget. |
 | `checks.*` | Required implementation verification gates. |
-| `review.*` | Stable diff review target and no-fix-cycle policy. |
+| `review.*` | Stable diff review target and bounded review-fix policy. |
 | `handoff.*` | Explicitly disables PR creation, merge, and Kanban completion. |
 | `failurePolicy.*` | Stop conditions and blocked-run behavior. |
 | `records.*` | Summary and raw-log policy. |

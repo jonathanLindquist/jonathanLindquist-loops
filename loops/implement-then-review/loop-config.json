@@ -39,7 +39,8 @@
     "oneTicketPerBranch": true
   },
   "limits": {
-    "verificationRepairAttempts": 3
+    "verificationRepairAttempts": 3,
+    "reviewFixCycles": 3
   },
   "checks": {
     "ticketVerificationItems": "required",
@@ -49,8 +50,8 @@
   "review": {
     "reviewTarget": "branch-diff-against-base",
     "requiresImplementationCommit": true,
-    "repairPolicy": "no-automatic-review-fix-cycle",
-    "blockingFindingsPolicy": "record-and-stop-after-review",
+    "repairPolicy": "bounded-review-fix-cycles",
+    "blockingFindingsPolicy": "route-to-implementation-until-limit",
     "prDiscussionLookup": "not-applicable-without-pr"
   },
   "handoff": {
@@ -67,6 +68,7 @@
     "repeatedVerificationFailure": "stop",
     "implementationCommitFailure": "stop",
     "thermosReviewFailure": "stop",
+    "unresolvedBlockingReviewFindings": "stop",
     "onStop": "leave-ticket-out-of-completed-and-record-blocker"
   },
   "records": {

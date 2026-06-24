@@ -35,9 +35,9 @@ The scenario suite should prove the controller behavior that matters most:
 - it stops after the configured review-fix limit.
 - it requires a current green gate before writing the run summary or merging.
 - it completes the ticket only after merge and confirms the board lane.
-- smaller loops, such as `implement-then-review`, stop at their documented
-  terminal state and do not borrow PR, merge, or Kanban completion authority
-  from larger loops.
+- smaller loops, such as `implement-then-review`, can have their own bounded
+  review-fix cycles while still refusing to borrow PR, merge, or Kanban
+  completion authority from larger loops.
 
 That is the whole loop skeleton. The subagent prompts still matter, but they are
 inputs to adapters; they should not be the only executable contract.

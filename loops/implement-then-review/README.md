@@ -1,7 +1,7 @@
 # implement-then-review
 
 Canonical loop definition for taking one ready ticket through scoped
-implementation and a Thermos review pass.
+implementation, bounded Thermos review-fix cycles, and a passing Thermos review.
 
 Install a thin target-project reference with:
 
@@ -18,7 +18,8 @@ reference repo from its own script location.
 ## Files
 
 - `loop.md`: the operating contract for implementing the top ready Backlog
-  ticket and stopping after Thermos review.
+  ticket and stopping after Thermos returns zero blocking findings or the
+  review-fix limit is exhausted.
 - `loop-config.json`: machine-readable project policy for the loop.
 - `prompts/`: reusable prompt templates for controller, implementation, and
   Thermos reviewer agents.
@@ -44,5 +45,6 @@ this loop.
 ## Non-Goals
 
 This loop does not open pull requests, merge branches, complete Kanban cards, or
-run automatic review-fix cycles. It leaves a reviewed implementation branch for
-a human or a later loop to decide what happens next.
+perform full E2E closeout. It leaves the implementation branch/worktree in
+place after review, or after unresolved blocking findings exhaust the configured
+review-fix limit.

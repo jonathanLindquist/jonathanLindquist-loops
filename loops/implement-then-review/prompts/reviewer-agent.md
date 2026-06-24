@@ -11,6 +11,7 @@ Inputs from the controller:
 - branch:
 - base branch:
 - implementation commit:
+- review cycle:
 - ticket card text:
 - linked plan path:
 - canonical loop-config.json:
@@ -38,8 +39,9 @@ weight overlap more heavily. Prioritize bugs, regressions, security issues,
 feature leaks, developer-experience breakage, missing tests, stale verification,
 secret leakage, repo instruction violations, and structural quality regressions.
 
-Classify every finding:
-- Blocking: should be fixed before PR, merge, or ticket completion.
+Classify every finding so the controller can route the next gate
+deterministically:
+- Blocking: should be fixed before this loop can return `reviewed`.
 - Nonblocking: can be recorded without blocking handoff.
 
 Do not rewrite the implementation. Do not open a PR. Do not merge. Do not
@@ -54,4 +56,6 @@ Return:
   implementation change.
 - Thermos passes completed.
 - recommendation: approve, request changes, or stop for human input.
+- review cycle.
+- whether zero blocking findings remain.
 ```

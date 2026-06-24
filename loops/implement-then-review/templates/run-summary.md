@@ -4,9 +4,10 @@
 - Plan: {{planPath}}
 - Branch: {{branchName}}
 - Implementation commit: {{implementationCommit}}
+- Review-fix cycles used: {{reviewFixCyclesUsed}}
 - Started: {{startedAt}}
 - Completed: {{completedAt}}
-- Result: {{reviewed|reviewed-with-blocking-findings|blocked}}
+- Result: {{reviewed|blocked}}
 
 ## Scope
 
@@ -32,6 +33,7 @@ Record only evidence produced after the final implementation change.
 
 - Reviewer agent:
 - Thermos passes completed:
+- Review-fix cycles used:
 - Blocking findings:
 - Nonblocking findings:
 - Final reviewer recommendation:

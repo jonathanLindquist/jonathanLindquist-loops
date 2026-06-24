@@ -27,6 +27,7 @@ export async function runImplementThenReviewLoop({
   let implementation;
   let implementationCommit;
   let review;
+  let reviewFixCyclesUsed = 0;
 
   const record = (event, details = {}) => {
     transcript.push({ event, ...details });
@@ -49,6 +50,7 @@ export async function runImplementThenReviewLoop({
       ticketId: card?.ticketId,
       branchName,
       implementationCommit: implementationCommit?.commit,
+      reviewFixCyclesUsed,
       transcript,
     };
   };
@@ -148,6 +150,7 @@ export async function runImplementThenReviewLoop({
     gate = await ok(
       "runImplementationAgent",
       {
+        mode: "implementation",
         attempt,
         ticketId: card.ticketId,
         card,
@@ -177,46 +180,106 @@ export async function runImplementThenReviewLoop({
 
   gate = await ok(
     "commitImplementation",
-    { ticketId: card.ticketId, branchName, implementation },
+    {
+      mode: "implementation",
+      cycle: 0,
+      ticketId: card.ticketId,
+      branchName,
+      implementation,
+    },
     "implementation-commit-failed",
   );
   if (gate.blocked) return gate.result;
   implementationCommit = gate.value;
 
-  gate = await ok(
-    "runThermosReview",
-    {
-      ticketId: card.ticketId,
-      card,
-      plan,
-      branchName,
-      baseBranch: config.branching.baseBranch,
-      worktreePath: worktree.path,
-      implementation,
-      implementationCommit,
-      reviewSkills: config.agents.reviewSkills,
-      aggregateReviewSkill: config.agents.aggregateReviewSkill,
-      config,
-    },
-    "thermos-review-failed",
-  );
-  if (gate.blocked) return gate.result;
-  review = normalizeReview(gate.value);
+  const maxReviewFixCycles = config.limits.reviewFixCycles ?? 0;
 
-  if (review.status === "blocked") {
-    return block("thermos-review-blocked", { detail: review.reason });
+  while (true) {
+    gate = await ok(
+      "runThermosReview",
+      {
+        cycle: reviewFixCyclesUsed + 1,
+        ticketId: card.ticketId,
+        card,
+        plan,
+        branchName,
+        baseBranch: config.branching.baseBranch,
+        worktreePath: worktree.path,
+        implementation,
+        implementationCommit,
+        reviewSkills: config.agents.reviewSkills,
+        aggregateReviewSkill: config.agents.aggregateReviewSkill,
+        config,
+      },
+      "thermos-review-failed",
+    );
+    if (gate.blocked) return gate.result;
+    review = normalizeReview(gate.value);
+
+    if (review.status === "blocked") {
+      return block("thermos-review-blocked", { detail: review.reason });
+    }
+
+    if (review.blockingFindings.length === 0) break;
+
+    if (reviewFixCyclesUsed >= maxReviewFixCycles) {
+      return block("unresolved-blocking-review-findings", {
+        findings: review.blockingFindings,
+        reviewFixCyclesUsed,
+      });
+    }
+
+    reviewFixCyclesUsed += 1;
+    gate = await ok(
+      "runImplementationAgent",
+      {
+        mode: "review-fix",
+        attempt: reviewFixCyclesUsed,
+        cycle: reviewFixCyclesUsed,
+        ticketId: card.ticketId,
+        card,
+        plan,
+        branchName,
+        worktreePath: worktree.path,
+        findings: review.blockingFindings,
+        previousImplementation: implementation,
+        previousReview: review,
+        config,
+      },
+      "review-fix-agent-failed",
+    );
+    if (gate.blocked) return gate.result;
+    implementation = gate.value;
+
+    if (implementation.status !== "ready") {
+      return block("repeated-verification-failure", {
+        mode: "review-fix",
+        reviewFixCyclesUsed,
+        detail: implementation.reason,
+      });
+    }
+
+    gate = await ok(
+      "commitImplementation",
+      {
+        mode: "review-fix",
+        cycle: reviewFixCyclesUsed,
+        ticketId: card.ticketId,
+        branchName,
+        implementation,
+        findings: review.blockingFindings,
+      },
+      "implementation-commit-failed",
+    );
+    if (gate.blocked) return gate.result;
+    implementationCommit = gate.value;
   }
-
-  const result =
-    review.blockingFindings.length > 0
-      ? "reviewed-with-blocking-findings"
-      : "reviewed";
 
   gate = await ok(
     "writeRunSummary",
     {
       ticketId: card.ticketId,
-      result,
+      result: "reviewed",
       completedAt: clock(),
       card,
       plan,
@@ -225,6 +288,7 @@ export async function runImplementThenReviewLoop({
       implementation,
       implementationCommit,
       review,
+      reviewFixCyclesUsed,
     },
     "cannot-write-run-summary",
   );
@@ -234,17 +298,19 @@ export async function runImplementThenReviewLoop({
     ticketId: card.ticketId,
     branchName,
     implementationCommit: implementationCommit.commit,
-    result,
+    result: "reviewed",
+    reviewFixCyclesUsed,
     recommendation: review.recommendation,
   });
 
   return {
     status: "reviewed",
-    result,
+    result: "reviewed",
     ticketId: card.ticketId,
     branchName,
     implementationCommit: implementationCommit.commit,
     reviewRecommendation: review.recommendation,
+    reviewFixCyclesUsed,
     blockingFindings: review.blockingFindings,
     nonblockingFindings: review.nonblockingFindings,
     transcript,
