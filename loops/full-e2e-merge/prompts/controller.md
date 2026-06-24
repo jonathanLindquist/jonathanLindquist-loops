@@ -67,5 +67,5 @@ with --complete, check applicable card checkboxes, and re-read the board to
 confirm completion.
 
 If any required gate fails, stop. Leave the card out of Completed and record
-the blocker in the run summary and/or linked plan.
+the blocker in the run summary.
 ```

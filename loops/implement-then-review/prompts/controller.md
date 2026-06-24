@@ -81,5 +81,5 @@ Stop with the branch/worktree left in place. Do not open a pull request, merge,
 delete the worktree, move the card to Completed, or check off completion boxes.
 
 If any required gate fails, stop. Leave the card out of Completed and record the
-blocker in the run summary and/or linked plan.
+blocker in the run summary.
 ```
