@@ -152,6 +152,7 @@ export async function runImplementThenReviewLoop({
       {
         mode: "implementation",
         attempt,
+        implementationSkill: config.agents.implementationSkill,
         ticketId: card.ticketId,
         card,
         plan,
@@ -196,9 +197,10 @@ export async function runImplementThenReviewLoop({
 
   while (true) {
     gate = await ok(
-      "runThermosReview",
+      "runReviewAgent",
       {
         cycle: reviewFixCyclesUsed + 1,
+        reviewSkill: config.agents.reviewSkill,
         ticketId: card.ticketId,
         card,
         plan,
@@ -207,17 +209,15 @@ export async function runImplementThenReviewLoop({
         worktreePath: worktree.path,
         implementation,
         implementationCommit,
-        reviewSkills: config.agents.reviewSkills,
-        aggregateReviewSkill: config.agents.aggregateReviewSkill,
         config,
       },
-      "thermos-review-failed",
+      "review-agent-failed",
     );
     if (gate.blocked) return gate.result;
     review = normalizeReview(gate.value);
 
     if (review.status === "blocked") {
-      return block("thermos-review-blocked", { detail: review.reason });
+      return block("review-agent-blocked", { detail: review.reason });
     }
 
     if (review.blockingFindings.length === 0) break;
@@ -236,6 +236,7 @@ export async function runImplementThenReviewLoop({
         mode: "review-fix",
         attempt: reviewFixCyclesUsed,
         cycle: reviewFixCyclesUsed,
+        implementationSkill: config.agents.implementationSkill,
         ticketId: card.ticketId,
         card,
         plan,
@@ -344,7 +345,7 @@ function assertEffects(effects) {
     "createTicketWorktree",
     "runImplementationAgent",
     "commitImplementation",
-    "runThermosReview",
+    "runReviewAgent",
     "writeRunSummary",
   ]);
 }

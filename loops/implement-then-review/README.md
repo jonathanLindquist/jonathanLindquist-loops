@@ -1,7 +1,8 @@
 # implement-then-review
 
 Canonical loop definition for taking one ready ticket through scoped
-implementation, bounded Thermos review-fix cycles, and a passing Thermos review.
+`implement-jl` implementation, bounded review-fix cycles, and a passing
+`review-jl` review.
 
 Install a thin target-project reference with:
 
@@ -18,11 +19,11 @@ reference repo from its own script location.
 ## Files
 
 - `loop.md`: the operating contract for implementing the top ready Backlog
-  ticket and stopping after Thermos returns zero blocking findings or the
+  ticket and stopping after `review-jl` returns zero blocking findings or the
   review-fix limit is exhausted.
 - `loop-config.json`: machine-readable project policy for the loop.
 - `prompts/`: reusable prompt templates for controller, implementation, and
-  Thermos reviewer agents.
+  reviewer agents.
 - `templates/run-summary.md`: summary format for each ticket run.
 
 Target projects store only `loop-ref.json`, `loop-config.json`, and `runs/`

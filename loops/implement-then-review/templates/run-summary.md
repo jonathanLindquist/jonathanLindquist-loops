@@ -29,10 +29,11 @@ Record only evidence produced after the final implementation change.
 - Full practical repo checks:
 - Changed-file secret scan:
 
-## Thermos Review
+## Review
 
 - Reviewer agent:
-- Thermos passes completed:
+- Review skill:
+- Review coverage note:
 - Review-fix cycles used:
 - Blocking findings:
 - Nonblocking findings:

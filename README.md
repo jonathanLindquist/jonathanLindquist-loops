@@ -14,7 +14,7 @@ and run history. Commit concise run summaries there, and keep raw logs local.
 ## Repository Structure
 
 - `loops/full-e2e-merge/`: the first loop definition.
-- `loops/implement-then-review/`: a smaller implementation plus Thermos review
+- `loops/implement-then-review/`: a smaller `implement-jl` plus `review-jl`
   loop.
 - `loops/<loop-id>/`: future loop definitions, each with its own config,
   prompts, templates, and run-record policy.
@@ -40,6 +40,13 @@ node "$LOOPS_REPO/scripts/install_agent_loop.mjs" \
 reference repo from its own script location, so the generated `loop-ref.json`
 points back to the downloaded loop repo even when the command runs from a
 different project.
+
+This repo does not have a package-level dependency on
+`jonathanLindquist-skills`, but installed loops do have operational skill
+dependencies. Target projects must already have `setup-project-workflow`
+artifacts, and loops such as `implement-then-review` expect the referenced
+skills, including `implement-jl` and `review-jl`, to be installed in the agent
+skills runtime.
 
 The installer creates:
 
@@ -97,19 +104,19 @@ that project needs project-specific values.
 ## implement-then-review
 
 The smaller loop turns the top ready Backlog ticket into an implemented branch
-that has passed Thermos review:
+that has passed `review-jl` review:
 
 1. Read the project workflow docs, Obsidian Kanban board, and linked plan.
 2. Work the top Backlog card only when it is `#ready-for-agent`.
 3. Create an isolated ticket branch/worktree.
-4. Use an implementation subagent to build and verify the change.
+4. Use `implement-jl` in an implementation subagent to build and verify the
+   change.
 5. Create a local implementation commit.
-6. Use a Thermos reviewer subagent to run correctness/security and code-quality
-   review passes.
-7. Send blocking Thermos findings back to the implementation subagent for
+6. Use `review-jl` in a reviewer subagent to review the branch diff.
+7. Send blocking review findings back to the implementation subagent for
    bounded review-fix cycles.
 8. Write a concise run summary and stop with the branch/worktree left in place
-   once Thermos returns zero blocking findings.
+   once `review-jl` returns zero blocking findings.
 
 If blocking findings remain after the configured review-fix limit, the loop
 stops as blocked. It does not open a PR, merge, or complete the Kanban card.

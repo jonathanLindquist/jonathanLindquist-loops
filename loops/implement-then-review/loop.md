@@ -1,7 +1,7 @@
 # implement-then-review Agent Loop
 
 This loop turns the top ready Backlog ticket into an implemented branch with a
-Thermos review result. It is designed for repositories that already use
+`review-jl` review result. It is designed for repositories that already use
 `setup-project-workflow`.
 
 The project-local source of truth remains:
@@ -11,9 +11,10 @@ The project-local source of truth remains:
 - the Obsidian Kanban board for visible ticket state.
 - `docs/plans/*.md` for durable ticket plans and completion notes.
 
-This loop is intentionally smaller than `full-e2e-merge`: it implements, runs
-Thermos review, routes blocking findings through bounded review-fix cycles, and
-stops with a reviewed branch or a blocked run. It does not open a pull request,
+This loop is intentionally smaller than `full-e2e-merge`: it implements through
+`implement-jl`, reviews through `review-jl`, routes blocking findings through
+bounded review-fix cycles, and stops with a reviewed branch or a blocked run.
+It does not open a pull request,
 merge, or complete the Kanban card.
 
 ## Loop Diagram
@@ -23,13 +24,12 @@ flowchart TD
   A["Top Backlog ticket"] --> B["Preflight workflow, git, config"]
   B --> C["Move card to In Progress"]
   C --> D["Create codex/TICKET-slug worktree branch"]
-  D --> E["Implementation subagent builds + verifies"]
+  D --> E["implement-jl subagent builds + verifies"]
   E --> F["Create local implementation commit"]
-  F --> G["Thermos reviewer runs correctness/security pass"]
-  G --> H["Thermos reviewer runs code-quality pass"]
-  H --> I["Synthesize blocking + nonblocking findings"]
+  F --> G["review-jl reviewer reviews branch diff"]
+  G --> I["Classify blocking + nonblocking findings"]
   I --> J{"Blocking findings?"}
-  J -- yes --> K["Implementation subagent fixes findings"]
+  J -- yes --> K["implement-jl subagent fixes findings"]
   K --> L["Create local review-fix commit"]
   L --> G
   J -- no --> M["Write run summary"]
@@ -39,7 +39,7 @@ flowchart TD
 ## Operating Contract
 
 One loop run owns one ticket, one branch, one worktree, one implementation
-sequence, one or more local implementation commits, one Thermos review sequence,
+sequence, one or more local implementation commits, one `review-jl` sequence,
 bounded review-fix cycles, and one summary.
 
 The controller must select the top card in the `Backlog` lane. If that card is
@@ -52,12 +52,13 @@ If they conflict on scope, acceptance criteria, or verification, stop and ask
 for the ticket to be corrected.
 
 The implementation subagent works in an isolated ticket worktree and branch
-named from `loop-config.json`, defaulting to `codex/{ticketId}-{slug}`.
+named from `loop-config.json`, defaulting to `codex/{ticketId}-{slug}`. It uses
+the configured `agents.implementationSkill`, defaulting to `implement-jl`.
 
-The Thermos reviewer reviews the branch diff against the configured base branch,
-the ticket, the linked plan, and repo instructions. It runs the Thermos aggregate
-workflow: first `thermos:thermo-nuclear-review`, then
-`thermos:thermo-nuclear-code-quality-review`, then a synthesized review.
+The reviewer reviews the branch diff against the configured base branch, the
+ticket, the linked plan, and repo instructions. It uses the configured
+`agents.reviewSkill`, defaulting to `review-jl`; that skill owns the
+Thermos-backed review workflow and synthesized findings-first result.
 
 Blocking findings are returned to the implementation subagent while configured
 review-fix cycles remain. If the reviewer still returns blocking findings after
@@ -112,18 +113,12 @@ relevant ticket verification, focused checks, the fullest practical repo check,
 and changed-file secret scan/review after the final review-fix change before
 returning `ready`.
 
-## Thermos Review Gate
+## Review Gate
 
-The Thermos reviewer must inspect the branch diff and ticket context. Findings
-must be classified as blocking or nonblocking.
-
-The reviewer must run and synthesize both Thermos review rubrics:
-
-- `thermos:thermo-nuclear-review` for bugs, regressions, security issues,
-  feature leaks, and developer-experience breakage.
-- `thermos:thermo-nuclear-code-quality-review` for maintainability,
-  abstraction quality, file-size growth, spaghetti branching, and missed
-  simplifications.
+The `review-jl` reviewer must inspect the branch diff and ticket context.
+Findings must be classified as blocking or nonblocking for the controller.
+The reviewer must follow the `review-jl` workflow rather than bypassing it with
+lower-level review skills.
 
 Blocking findings include:
 
@@ -156,10 +151,10 @@ The loop has reached its intended terminal state when:
 - focused and full practical repo checks passed.
 - changed-file secret scan/review passed.
 - a local implementation commit exists.
-- Thermos review completed and returned zero blocking findings.
+- `review-jl` completed and returned zero blocking findings.
 - the run summary records the implementation, verification, and review result.
 
-The terminal status is `reviewed` only when Thermos returns zero blocking
+The terminal status is `reviewed` only when `review-jl` returns zero blocking
 findings. If blocking findings remain after the review-fix limit, the loop stops
 as `blocked` with `unresolved-blocking-review-findings`.
 
@@ -188,10 +183,11 @@ named canonical values.
 | --- | --- |
 | `paths.*` | Project-local workflow docs, marker files, and run-record paths. |
 | `ticketSelection.strategy` | `top-card-only`; the loop never skips the top Backlog card. |
-| `agents.reviewSkills` | Thermos rubrics the reviewer must run and synthesize. |
+| `agents.implementationSkill` | Implementation skill used by the implementation subagent; default `implement-jl`. |
+| `agents.reviewSkill` | Review skill used by the reviewer subagent; default `review-jl`. |
 | `branching.branchNameTemplate` | Branch naming policy, default `codex/{ticketId}-{slug}`. |
 | `limits.verificationRepairAttempts` | Initial implementation verification retry budget. |
-| `limits.reviewFixCycles` | Blocking Thermos finding repair budget. |
+| `limits.reviewFixCycles` | Blocking review finding repair budget. |
 | `checks.*` | Required implementation verification gates. |
 | `review.*` | Stable diff review target and bounded review-fix policy. |
 | `handoff.*` | Explicitly disables PR creation, merge, and Kanban completion. |

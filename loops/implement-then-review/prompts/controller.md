@@ -32,29 +32,25 @@ Preflight before implementation:
 Create an isolated ticket branch/worktree using the configured branch template.
 Move the Kanban card to In Progress using the project ticket utility.
 
-Spawn an implementation subagent with
-the canonical implement-then-review implementation-agent.md prompt from the
-reference repo. Give it the ticket id, card text, linked plan path,
-branch/worktree path, resolved loop config, and `mode: implementation`. It owns
-implementation, tests, verification, and changed-file secret scan evidence. It
-does not open a PR, merge, or complete the ticket.
+Spawn an implementation subagent with the configured implementation skill
+`implement-jl` and the canonical implement-then-review implementation-agent.md
+prompt from the reference repo. Give it the ticket id, card text, linked plan
+path, branch/worktree path, resolved loop config, and `mode: implementation`.
+It owns implementation, tests, verification, and changed-file secret scan
+evidence. It does not open a PR, merge, or complete the ticket.
 
 When implementation is ready, create a local implementation commit. Do not push
 it. Use that commit and branch diff as the stable target for review.
 
-Spawn a Thermos reviewer subagent with
-the canonical implement-then-review reviewer-agent.md prompt from the reference
-repo. Give it the ticket card, linked plan, AGENTS.md, resolved loop config,
-implementation summary, verification evidence, base branch, branch name, and
-implementation commit.
+Spawn a `review-jl` reviewer subagent with the canonical implement-then-review
+reviewer-agent.md prompt from the reference repo. Give it the ticket card,
+linked plan, AGENTS.md, resolved loop config, implementation summary,
+verification evidence, base branch, branch name, and implementation commit.
 
-The reviewer must run the Thermos aggregate review workflow:
-1. thermo-nuclear-review for correctness, security, regressions, feature leaks,
-   and developer-experience breakage.
-2. thermo-nuclear-code-quality-review for maintainability and abstraction
-   quality.
-3. A synthesized findings-first review that classifies findings as blocking or
-   nonblocking.
+The reviewer must use `review-jl` against the branch diff from the configured
+base branch to the implementation commit. It must return a synthesized
+findings-first review and classify findings as blocking or nonblocking for this
+loop.
 
 If the reviewer returns blocking findings, send only those blocking findings
 back to the implementation subagent with `mode: review-fix`, the review cycle,
@@ -63,7 +59,7 @@ implementation subagent owns fixing the findings and rerunning evidence after
 the final review-fix change.
 
 After each ready review-fix response, create a new local implementation commit
-for the current diff. Do not push it. Run Thermos review again against the
+for the current diff. Do not push it. Run `review-jl` again against the
 latest branch diff, latest implementation summary, latest verification evidence,
 and latest implementation commit.
 

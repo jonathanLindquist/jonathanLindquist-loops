@@ -23,14 +23,11 @@
   },
   "agents": {
     "model": "ephemeral-subagents",
-    "implementationRole": "implementation-agent",
-    "reviewerRole": "thermos-reviewer-agent",
-    "reviewScope": "thermo-correctness-security-plus-code-quality",
-    "aggregateReviewSkill": "thermos:thermos",
-    "reviewSkills": [
-      "thermos:thermo-nuclear-review",
-      "thermos:thermo-nuclear-code-quality-review"
-    ]
+    "implementationRole": "implement-jl-agent",
+    "implementationSkill": "implement-jl",
+    "reviewerRole": "review-jl-agent",
+    "reviewSkill": "review-jl",
+    "reviewScope": "review-jl-branch-diff"
   },
   "branching": {
     "baseBranch": "main",
@@ -67,7 +64,7 @@
     "unreadyTopBacklogCard": "stop",
     "repeatedVerificationFailure": "stop",
     "implementationCommitFailure": "stop",
-    "thermosReviewFailure": "stop",
+    "reviewAgentFailure": "stop",
     "unresolvedBlockingReviewFindings": "stop",
     "onStop": "leave-ticket-out-of-completed-and-record-blocker"
   },

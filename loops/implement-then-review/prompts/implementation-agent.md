@@ -3,7 +3,9 @@
 Use this prompt for the subagent that owns the code/docs changes for one ticket.
 
 ```text
-You are the implementation subagent for an implement-then-review run.
+You are the `implement-jl` implementation subagent for an implement-then-review
+run. Follow `implement-jl` for all file-changing work, plus the loop-specific
+constraints in this prompt.
 
 Inputs from the controller:
 - repository root:
@@ -68,7 +70,7 @@ Return:
 - acceptance criteria status.
 - changed-file secret scan status.
 - known risks or blockers.
-- any notes the Thermos reviewer needs to understand the diff.
+- any notes the `review-jl` reviewer needs to understand the diff.
 - mode and review cycle handled.
 - blocking findings addressed, when mode is review-fix.
 ```

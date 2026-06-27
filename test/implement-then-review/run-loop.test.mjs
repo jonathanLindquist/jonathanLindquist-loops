@@ -10,7 +10,7 @@ const config = await loadLoopConfig(
   new URL("../../loops/implement-then-review/loop-config.json", import.meta.url),
 );
 
-test("drives implementation and Thermos review in deterministic order", async () => {
+test("drives implement-jl and review-jl in deterministic order", async () => {
   const effects = createEffects();
 
   const result = await runImplementThenReviewLoop({ config, effects });
@@ -35,25 +35,35 @@ test("drives implementation and Thermos review in deterministic order", async ()
     "createTicketWorktree",
     "runImplementationAgent",
     "commitImplementation",
-    "runThermosReview",
+    "runReviewAgent",
     "writeRunSummary",
   ]);
+  assert.equal(
+    effects.calls.find((call) => call.name === "runImplementationAgent").args
+      .implementationSkill,
+    "implement-jl",
+  );
+  assert.equal(
+    effects.calls.find((call) => call.name === "runReviewAgent").args
+      .reviewSkill,
+    "review-jl",
+  );
 });
 
-test("routes blocking Thermos findings through review-fix until approved", async () => {
+test("routes blocking review-jl findings through review-fix until approved", async () => {
   const effects = createEffects({
-    thermosReviews: [
+    reviews: [
       {
         blockingFindings: ["src/example.mjs:1 misses the acceptance behavior"],
         nonblockingFindings: [],
         recommendation: "request changes",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
       {
         blockingFindings: [],
         nonblockingFindings: [],
         recommendation: "approve",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
     ],
   });
@@ -85,24 +95,21 @@ test("routes blocking Thermos findings through review-fix until approved", async
     ["src/example.mjs:1 misses the acceptance behavior"],
   );
   assert.equal(
-    effects.calls.filter((call) => call.name === "runThermosReview").length,
+    effects.calls.filter((call) => call.name === "runReviewAgent").length,
     2,
   );
 });
 
 test("stops after the configured review-fix cycle limit", async () => {
   const effects = createEffects({
-    thermosReviews: [
+    reviews: [
       ...Array.from({ length: config.limits.reviewFixCycles + 1 }, () => ({
         blockingFindings: [
           "src/example.mjs:1 misses the acceptance behavior",
         ],
         nonblockingFindings: [],
         recommendation: "request changes",
-        passes: [
-          "thermo-nuclear-review",
-          "thermo-nuclear-code-quality-review",
-        ],
+        passes: ["review-jl"],
       })),
     ],
   });
@@ -118,7 +125,7 @@ test("stops after the configured review-fix cycle limit", async () => {
     config.limits.reviewFixCycles + 1,
   );
   assert.equal(
-    effects.calls.filter((call) => call.name === "runThermosReview").length,
+    effects.calls.filter((call) => call.name === "runReviewAgent").length,
     config.limits.reviewFixCycles + 1,
   );
   assert.equal(
@@ -154,12 +161,12 @@ test("review-fix implementation failures block before re-review", async () => {
       readyImplementation(),
       { status: "failed", reason: "full suite failed after review fix" },
     ],
-    thermosReviews: [
+    reviews: [
       {
         blockingFindings: ["src/example.mjs:1 misses the acceptance behavior"],
         nonblockingFindings: [],
         recommendation: "request changes",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
     ],
   });
@@ -170,7 +177,7 @@ test("review-fix implementation failures block before re-review", async () => {
   assert.equal(result.reason, "repeated-verification-failure");
   assert.equal(result.reviewFixCyclesUsed, 1);
   assert.equal(
-    effects.calls.filter((call) => call.name === "runThermosReview").length,
+    effects.calls.filter((call) => call.name === "runReviewAgent").length,
     1,
   );
   assert.deepEqual(
@@ -181,24 +188,24 @@ test("review-fix implementation failures block before re-review", async () => {
   );
 });
 
-test("passes current implementation evidence into each Thermos review", async () => {
+test("passes current implementation evidence into each review-jl review", async () => {
   const effects = createEffects({
     implementations: [
       readyImplementation({ summary: "Initial implementation." }),
       readyImplementation({ summary: "Review fix with fresh checks." }),
     ],
-    thermosReviews: [
+    reviews: [
       {
         blockingFindings: ["src/example.mjs:1 misses the acceptance behavior"],
         nonblockingFindings: [],
         recommendation: "request changes",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
       {
         blockingFindings: [],
         nonblockingFindings: [],
         recommendation: "approve",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
     ],
   });
@@ -207,13 +214,13 @@ test("passes current implementation evidence into each Thermos review", async ()
 
   assert.deepEqual(
     effects.calls
-      .filter((call) => call.name === "runThermosReview")
+      .filter((call) => call.name === "runReviewAgent")
       .map((call) => call.args.implementation.summary),
     ["Initial implementation.", "Review fix with fresh checks."],
   );
   assert.deepEqual(
     effects.calls
-      .filter((call) => call.name === "runThermosReview")
+      .filter((call) => call.name === "runReviewAgent")
       .map((call) => call.args.implementationCommit.commit),
     ["impl-abc123", "impl-fix-1"],
   );
@@ -221,18 +228,18 @@ test("passes current implementation evidence into each Thermos review", async ()
 
 test("review-fix cycle count is included in the run summary payload", async () => {
   const effects = createEffects({
-    thermosReviews: [
+    reviews: [
       {
         blockingFindings: ["src/example.mjs:1 misses the acceptance behavior"],
         nonblockingFindings: [],
         recommendation: "request changes",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
       {
         blockingFindings: [],
         nonblockingFindings: [],
         recommendation: "approve",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
     ],
   });
@@ -246,14 +253,14 @@ test("review-fix cycle count is included in the run summary payload", async () =
   assert.equal(summaryCall.args.reviewFixCyclesUsed, 1);
 });
 
-test("blocking Thermos findings are not a successful reviewed terminal state", async () => {
+test("blocking review-jl findings are not a successful reviewed terminal state", async () => {
   const effects = createEffects({
-    thermosReviews: [
+    reviews: [
       {
         blockingFindings: ["src/example.mjs:1 misses the acceptance behavior"],
         nonblockingFindings: [],
         recommendation: "request changes",
-        passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+        passes: ["review-jl"],
       },
     ],
   });
@@ -314,7 +321,7 @@ test("retries implementation verification failures and never reviews if they per
     config.limits.verificationRepairAttempts,
   );
   assert.equal(
-    effects.calls.filter((call) => call.name === "runThermosReview").length,
+    effects.calls.filter((call) => call.name === "runReviewAgent").length,
     0,
   );
 });
@@ -325,14 +332,13 @@ function createEffects(overrides = {}) {
     ...(overrides.implementations ?? []),
     ...Array.from({ length: 10 }, () => readyImplementation()),
   ];
-  const thermosReviews = [
-    ...(overrides.thermosReviews ??
-      (overrides.thermosReview ? [overrides.thermosReview] : [])),
+  const reviews = [
+    ...(overrides.reviews ?? (overrides.review ? [overrides.review] : [])),
     ...Array.from({ length: 10 }, () => ({
       blockingFindings: [],
       nonblockingFindings: [],
       recommendation: "approve",
-      passes: ["thermo-nuclear-review", "thermo-nuclear-code-quality-review"],
+      passes: ["review-jl"],
     })),
   ];
   let commitCount = 0;
@@ -377,7 +383,7 @@ function createEffects(overrides = {}) {
       commitCount += 1;
       return { commit };
     }),
-    runThermosReview: effect("runThermosReview", () => thermosReviews.shift()),
+    runReviewAgent: effect("runReviewAgent", () => reviews.shift()),
     writeRunSummary: effect("writeRunSummary", () => ({ ok: true })),
     recordBlockedRun: effect("recordBlockedRun", () => ({ ok: true })),
   };
@@ -390,7 +396,7 @@ function readyCard() {
     tags: ["#ready-for-agent"],
     planPath: "docs/plans/JL-0004-implement-then-review-harness.md",
     todo: ["Build the harness"],
-    acceptanceCriteria: ["The loop passes only after Thermos review approves"],
+    acceptanceCriteria: ["The loop passes only after review-jl approves"],
     verification: ["npm test"],
   };
 }
